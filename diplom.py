@@ -1,4 +1,3 @@
-import time
 import json
 import requests
 
@@ -38,11 +37,24 @@ class User:
         for friends in self.get_friends()['response']['items']:
             params = self.get_params()
             params['user_id'] = friends
-            time.sleep(0.3)
             friends_groups = requests.get('https://api.vk.com/method/groups.get', params)
-            if 'response' in friends_groups.json():
-                self.friends_groups_list.extend(friends_groups.json()['response']['items'])
-                print('.')
+            while True:
+                if 'response' in friends_groups.json():
+                    self.friends_groups_list.extend(friends_groups.json()['response']['items'])
+                    print('.')
+                    break
+                elif friends_groups.json()['error']['error_code'] == 6:
+                    params = self.get_params()
+                    params['user_id'] = friends
+                    friends_groups = requests.get('https://api.vk.com/method/groups.get', params)
+                    if 'response' in friends_groups.json():
+                        self.friends_groups_list.extend(friends_groups.json()['response']['items'])
+                        print('.')
+                        break
+                    elif friends_groups.json()['error']['error_code'] != 6:
+                        break
+                else:
+                    break
         return self.friends_groups_list
 
     def matches_in_groups(self):
